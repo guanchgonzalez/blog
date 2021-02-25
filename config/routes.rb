@@ -1,10 +1,10 @@
 Rails.application.routes.draw do
-  #get 'welcome/index'
+  get 'welcome/index'
 
 
-  resources: articles
-    get "/articles"
+#  resources: articles
 =begin
+    get "/articles"
     post "/articles"
     delete "/articles"
     get "/articles/:id"
