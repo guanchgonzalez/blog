@@ -1,8 +1,8 @@
 Rails.application.routes.draw do
-  get 'welcome/index'
+  #get 'welcome/index'
 
 
-#  resources: articles
+  resources :articles
 =begin
     get "/articles"
     post "/articles"
