@@ -26,8 +26,15 @@ class ArticlesController < ApplicationController
     end
   end
 
+  #DELETE "/articles/:id"
+  def destroy
+      @article = Article.find(params[:id])
+      @article.destroy
+      redirect_to articles_path
+  end
+
   #PUT "/articles/:id"
   def update
-
+    # @article.update_attributes( { title: 'Nuevo titulo' } )
   end
 end
