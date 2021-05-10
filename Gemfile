@@ -29,6 +29,9 @@ gem 'devise'
 # Remote forms with AJAX
 gem 'jquery-turbolinks'
 
+# Allow to upload and edit image files to the server
+gem 'paperclip'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
