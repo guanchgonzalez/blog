@@ -22,6 +22,7 @@ class ArticlesController < ApplicationController
   #GET "/articles/:id/edit"
   def edit
   end
+
   #POST "/articles"
   def create
     @article = current_user.articles.new(article_params)
