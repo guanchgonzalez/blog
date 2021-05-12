@@ -1,0 +1,1122 @@
+
+--- NOTE: '$' means looged as a normal S.O. user and '#' means looged as root.
+
+
+--- Following the instruction from:
+      https://www.server-world.info/en/note?os=CentOS_7&p=rails4
+      https://www.howtoforge.com/tutorial/how-to-install-and-use-ruby-on-rails-with-postgresql-on-centos-7/
+      https://www.youtube.com/watch?v=d8-V2V9oMvI&list=PLpOqH6AE0tNiQ-ofrDlbAUSc1r67r_AWv&index=2
+
+
+
+##########################################################################################################################################
+######
+######   1)  Create a new App, using PostgreSQL and the Rails 4 version:
+######
+##########################################################################################################################################
+
+$ rails _4.2.11.3_ new blog -d postgresql
+      create  
+      create  README.rdoc
+      create  Rakefile
+      create  config.ru
+      create  .gitignore
+      create  Gemfile
+. . .
+Using web-console 2.3.0
+Bundle complete! 12 Gemfile dependencies, 59 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+         run  bundle exec spring binstub --all
+* bin/rake: spring inserted
+* bin/rails: spring inserted
+
+
+ - Go inside the new project (App):
+
+$ cd blog
+
+ - Config the DB and its conection:
+
+$ vim config/database.yml
+. . .
+
+ - Create the DB:
+
+$ rake db:setup
+$ rake db:migrate
+
+
+
+##########################################################################################################################################
+######
+######   2)  Start the App server:
+######
+##########################################################################################################################################
+
+$ rails s
+
+Web --> http://localhost:3000
+
+Ctrl+C
+
+
+
+##########################################################################################################################################
+######
+######   3)  Create a controller (always *_controller.rb):
+######
+##########################################################################################################################################
+
+$ rails generate controller welcome index
+      create  app/controllers/welcome_controller.rb
+      invoke    scss
+. . .
+      create      app/assets/stylesheets/welcome.scss
+
+ - Start server:
+
+$ rails s
+
+Web --> http://localhost:3000/welcome/index
+
+Ctrl+C
+
+ - Route "welcome/index" (controller/action) as root view, in /config/routes.rb:
+
+  #get 'welcome/index'
+  root 'welcome#index'
+
+ - Can add style sheets (*.css) into /app/assets/stylesheets.
+
+
+
+##########################################################################################################################################
+######
+######   4)  Create a model (always Cap first letter and singular, the table will have the same name, but non-cap and plural):
+######
+##########################################################################################################################################
+
+$ rails generate model Article \
+title:string \
+body:text \
+visits_count:integer
+
+Running via Spring preloader in process 14675
+      invoke  active_record
+      create    db/migrate/20210223143952_create_articles.rb
+      create    app/models/article.rb
+      invoke    test_unit
+      create      test/models/article_test.rb
+      create      test/fixtures/articles.yml
+. . .
+
+
+
+##########################################################################################################################################
+######
+######   5)  Migrate: create the table into the DB
+######
+##########################################################################################################################################
+
+$ rake db:migrate
+
+ - Inspect DB tables from Rails console, as objects (by its models):
+
+$ rails console
+irb> Article.all
+
+
+
+##########################################################################################################################################
+######
+######   6)  Create the main Layout: common code for all the controllers views
+######
+##########################################################################################################################################
+
+ - Select the "Open Sans" Google fontype from www.google.com/fonts (Roboto for Android) and add it in the header section by a <link href="">
+ - Create the common styles for all the views in /app/assets/stylesheets/styles.scss (*.scss for Rails)
+ - Create a navbar in /app/views/layouts/application.html.erb (then it will be a partial)
+ - The <%= yield %> as the last line in the layout file will load any view file content when is called
+
+
+
+##########################################################################################################################################
+######
+######   7) Routes: actions that a given controller can do
+######
+##########################################################################################################################################
+
+ In the /config/routes.rb this line:
+
+  resource :articles
+
+ Is equivalent to all the CRUD actions for the articles controller (N is the id):
+
+  get "/articles"    (action INDEX)     https://localhost:3000/articles
+  post "/articles"    (action CREATE)     https://localhost:3000/articles
+  delete "/articles/:id"    (action DESTROY / DELETE)     https://localhost:3000/articles/N
+  get "/articles/:id"    (action SHOW)     https://localhost:3000/articles/N
+  get "/articles/new"    (action NEW)     https://localhost:3000/articles/new
+  get "/articles/:id/edit"    (action EDIT)     https://localhost:3000/articles/N/edit
+  patch "/articles/:id"    (action UPDATE)     https://localhost:3000/articles/N
+  put "/articles/:id"    (action UPDATE)     https://localhost:3000/articles/N
+
+
+7.1) resources parameter:
+
+ - All the actions except delete:
+
+  resource :articles, except: :delete
+
+ - Only the create and show actions:
+
+  resource :articles, only: [: , :]
+
+
+7.2) Comment several lines:
+
+=begin
+ . . .
+ text to be commented
+ . . .
+=end
+
+
+
+##########################################################################################################################################
+######
+######   8)  Controllers:
+######
+##########################################################################################################################################
+
+ - Create controller file: /app/controller/articles_controller.rb
+   The index action will list all the items in the model and give them to its view through the class variable @articles
+ 
+class ArticlesController < ApplicationController
+  def index
+    @articles = Article.all
+  end
+end
+
+ - Create controller view directory: /app/views/articles
+
+ - Create index view files: /app/views/articles/index.html.erb
+
+<%= @articles.inspect %>
+
+ - Insert a register in table articles by Rails console:
+
+$ rails console
+irb> Article.create( title: "Primer articulo", body: "Bienvenidos a mi blog.", visits_count: 0 )
+
+
+
+##########################################################################################################################################
+######
+######   9)  Send data to the controller: actions new and create
+######
+##########################################################################################################################################
+
+ - Through the class variable @articles in the controller file: /app/controller/articles_controller.rb
+   The data is not persistent (isn't committed in DB) until the save method is called.
+
+  def new
+    @article = Article.new
+  end
+
+  def show
+    @article = Article.find(params[:id]
+  end
+
+  def create
+    @article = Article.new(title: params[:article][:title], body: params[:article][:body])
+    if @article.save
+      redirect_to @article
+    else
+      render :new
+    end
+  end
+
+ - IF block explanation:
+   - OK --> shows the saved element (redirect_to command)
+   - NOK --> shows the initial view to repeat the action (render command)
+
+
+ - Form in the New view /app/views/articles/new.html.erb
+
+  <%= form_for(@article) do |f| %>
+    . . .
+  <%end%>
+
+
+
+##########################################################################################################################################
+######
+######   10)  Validates (secure DB tables to avoid SQLi and any other DB requirement) in models files by MVC:
+######
+##########################################################################################################################################
+
+ - Avoid to insert null parameter:
+
+  validates :title, presence: true
+
+ - In the controller, @OBJECT.save method is OK when the validations are passed (see (9)).
+
+ - In the view, @OBJECT.errors.full_messages keeps the validation NOK messages, to be shown to the client.
+
+
+
+##########################################################################################################################################
+######
+######   11)  Basic ActiveRecord: 1:N interface from the same model to any DB (sqlite3, posgreSQL...)
+######
+##########################################################################################################################################
+
+$ rails console
+
+ - Count table registers:
+
+irb> Article.all.count
+irb> Article.all.size
+
+ - Select ONE register by default column value:
+
+irb> Article.find(5)
+
+ - Select ONE register by other column value:
+
+irb> Article.find_by(title:"Segundo articulo")
+
+ - Select all the coincidences:
+
+irb> Article.where("title LIKE ?", "%articulo%")
+
+ - From the controller, instead of the model:
+
+  def show
+   @article = Article.where("id LIKE ? OR title LIKE ?", params[:id], params[:title])
+  end
+
+ - Select all the non-coincidences:
+
+irb> Article.where.not("id = 1")
+
+ - Delete ONE register by default column value:
+
+  def destroy
+    @article = Article.find(params[:id])
+    @article.destroy
+    redirect_to articles_path
+  end
+
+
+
+##########################################################################################################################################
+######
+######   12)  Strong params: allow access only to specific table columns
+######
+##########################################################################################################################################
+
+ - In the controller file, a private method to require the table and permit the columns:
+
+  private
+
+  def article_params
+    params.require(:article).permit(:title,:body)
+  end
+
+ - Then modify the Create method:
+
+  def create
+    @article = Article.new(article_params)
+    . . .
+  end
+
+
+
+##########################################################################################################################################
+######
+######   13)  Partials: put all the common code from views in a single _action.html.erb file
+######
+##########################################################################################################################################
+
+ - Clean the common code in the view files of the given controller and substitute it by the render command:
+      /app/views/articles/new.html.erb
+      /app/views/articles/edit.html.erb
+
+ - Copy the common code (the form_for section) in a partial file: /app/views/articles/_form.html.erb
+
+ - Use local variables to pass values from view files to partial file:
+
+/app/views/articles/new.html.erb
+<div style="width: 80%; margin: 0 auto;">
+  <%= render "form", name: "Crear" %>
+</div>
+
+/app/views/articles/edit.html.erb
+<div style="width: 80%; margin: 0 auto;">
+  <%= render "form", name: "Editar" %>
+</div>
+
+
+ - The local variable should by initialized with a default value in the partial file:
+
+/app/views/articles/_form.html.erb
+<% name ||= "Crear" %>
+<h1><%= name %> artículo</h1>
+<%= form_for(@article) do |f| %>
+  . . .
+  </div>
+<% end %>
+
+
+ - The Edit action isn't available yet due the changes aren't persisted into the DB. In the controller file:
+
+  def edit
+    @article = Article.find(params[:id])
+  end
+
+ - The Update method will do it, so it have to pass the validations:
+
+  def update
+    if @article.update(article_params)
+      redirect_to @article
+    else
+      render :edit
+    end
+  end
+
+ - IF block explanation:
+   - OK --> shows the saved element (redirect_to command)
+   - NOK --> shows the initial view to repeat the action (render command)
+
+
+ - The main view, /app/views/articles/index.html.erb , shoud be modified to show all the existing elements
+
+<% @articles.each do |article| %>
+<h1><%= link_to article.title, article %></h1>
+<div>
+  <%= article.body %> - <%= link_to "Eliminar", article, class: "red", method: :delete %>
+</div>
+<% end %>
+
+ - Index view explanation:
+   - link_to article.title, article --> every title is a link to the article element itself, the Show action
+   - article.body --> body param shown
+   - link_to "Eliminar", article, method: :delete --> Eliminar is a link to the article element too, but the Delete action
+
+
+ - To offer the Edit action, the /app/views/articles/show.html.erb view should be modified:
+
+<h1><%= @article.title %></h1>
+<div>
+  <%= @article.body %>
+</div>
+<div>
+  <%= link_to "Editar", edit_article_path(@article) %>
+</div>
+
+
+
+##########################################################################################################################################
+######
+######   14)  User authentication (devise), part I of II
+######
+##########################################################################################################################################
+
+ - Install devise gem.
+   First insert the command in the Gemfile:
+
+gem 'devise'
+
+ - From the app root path, execute the installation:
+
+$ bundle install
+
+ - Generate the gem devise installators with the generator (g) subcommand:
+
+$ rails g devise:install
+
+ - Check this installation steps:
+
+    Ensure you have flash messages in /app/views/layaout/application.html.erb
+
+      <p class="notice"><%= notice %></p>
+      <p class="alert"><%= alert %></p>
+
+
+ - Create a model to be used by devise:
+
+$ rails g devise User
+
+ - A new entry is created into the /app/config/routes.rb
+
+  devise_for :users
+
+ - A new migrate file is created into /db/migrate and should be executed:
+
+$ rake db:migrate
+
+
+ - The devise gem is functional. Here are the new URLs:
+
+    Login (sign_in):   https://localhost:3000/users/sign_in
+    Create account (sign_up):   https://localhost:3000/users/sign_up
+
+
+ - If the user is already logged in, a close session action should be offered.
+   In /app/views/layaout/application.html.erb insert a new <li> element into the navbar:
+
+      . . .
+      <li class="col-md">
+        Tecnología
+      </li>
+      <% if user_signed_in? %>
+        <li class="col-md">
+          <%= link_to "Cerrar sesión", destroy_user_session_path, method: :delete %>
+        </li>
+      <% end %>
+
+
+
+##########################################################################################################################################
+######
+######   15)  User authentication (devise), part II of II
+######
+##########################################################################################################################################
+
+ - Move the navbar to a partial file.
+
+ - Create /app/views/layouts/partials
+
+ - Create a new partial file copying from /app/views/layaout/application.html.erb
+
+Modified: /app/views/layaout/application.html.erb
+. . .
+<body>
+  <%= render "partials/navigation" %>
+  <p class="notice"><%= notice %></p>
+  <p class="alert"><%= alert %></p>
+
+  <%= yield %>
+
+</body>
+</html>
+
+
+New: /app/views/layouts/partials/_navigation.html.erb
+
+<header>
+  <nav class="be-red white large-padding">
+    <ul class="no-list row center-xs middle-xs">
+      <li class="col-md">
+        <h1 class="no-margin" id="logo">Mi Blog</h1>
+      </li>
+      . . .
+      <% if user_signed_in? %>
+        <li class="col-md">
+          <%= link_to "Cerrar sesión", destroy_user_session_path, method: :delete %>
+        </li>
+      <% else %>
+        <li class="col-md">
+          <%= link_to "Iniciar sesión", new_user_session_path %>
+        </li>
+        <li class="col-md">
+          <%= link_to "Crear cuenta", new_user_registration_path %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</header>
+
+
+ - Create the views for the new actions:
+
+$ rails g devise:views
+
+ - Improve the views style:
+
+    Login:  /app/views/devise/sessions/new.html.erb
+    Create account:  /app/views/devise/registrations/new.html.erb
+
+ - Modify the initial (root) view:  /app/views/wellcome/index.html.erb
+
+<% if user_signed_in? %>
+  <h1>Bienvenido, <%= current_user.email %></h1>
+<% end %>
+
+
+
+##########################################################################################################################################
+######
+######   16)  1:N associations (FKs between models)
+######
+##########################################################################################################################################
+
+ - The articles table registers should be associated to the users whom created them.
+     - 1 user have N articles
+     - Every article belongs to 1 user
+
+ - Create the FK creation migration file:
+
+$ rails generate migration add_user_id_to_articles user:references
+
+ - Edit the articles model file:  /app/models/article.rb
+
+class Article < ActiveRecord::Base
+  belongs_to :user
+  . . .
+
+ - Edit the users model file:  /app/models/user.rb
+
+class User < ActiveRecord::Base
+  . . .
+  has_many :articles
+end
+
+ - Edit the article controller file to allow new registers with the user_id column:  /app/controllers/articles_controller.rb
+
+def create
+  @article = current_user.articles.new(article_params)
+  . . .
+
+
+ - After creating a new articles register, from the console we can access to the referenced info:
+
+$ rails console
+irb> Article.last.user
+irb> Article.last.user.email
+
+
+ - Update the article views to include the user methods (and to avoid race conditions):
+
+/app/views/articles/show.html.erb
+
+<h1><%= @article.title %></h1>
+<% unless @article.user.nil? %>
+  <p>
+    Escrito por: <%= @article.user.email %>
+  </p>
+<% end %>
+. . .
+
+
+
+##########################################################################################################################################
+######
+######   17)  Callbacks (executed during a state change in the object lifecycle)
+######
+##########################################################################################################################################
+
+ - An object could be created, updated and destroyed, that's its lifecycle. Active Record identifies these transitions.
+   Callbacks are methods that get called at certain moments of an object's life cycle.
+   Could be specific (before_validation, after_save...), for models, or general (before_action), for controllers.
+
+ - Register the callback into the controller file:  /app/controllers/articles_controller.rb
+
+class ArticlesController < ApplicationController
+  before_action :authenticate_user!, except: [:show, :index]
+  before_action :set_article, except: [:index, :new, :create]
+  . . .
+
+ - Write the code that will be executed with the callback as a private method into the controller file
+   (authenticate_user is a devise own method, set_article must be defined):
+
+  . . .
+  private
+  def set_article
+    @article = Article.find(params[:id])
+  end
+
+
+ - Refactor the code to avoid repeat action definitions (erase all the lines where ".find(params[:id])" is used):
+
+  def show
+    # @article = Article.find(params[:id])
+  end
+  . . .
+
+  def edit
+    # @article = Article.find(params[:id])
+  end
+  . . .
+
+  def destroy
+    # @article = Article.find(params[:id])
+    . . .
+
+  def update
+    # @article = Article.find(params[:id])
+    . . .
+
+
+ - Callbacks in model:  /app/models/article.rb
+
+class Article < ActiveRecord::Base
+  . . .
+  before_save :set_visits_count
+
+  private
+  def set_visits_count
+    self.visits_count ||= 0
+  end
+
+
+ - In the other hand, fixing the bug: the visits_count column should be initialized when a new article is created.
+   When all the existing articles are fixed, a new method must exists to autoincrement the column:
+
+/app/models/article.rb
+  . . .
+  def update_visits_count
+    self.update(visits_count: self.visits_count + 1)
+  end
+
+  private
+  . . .
+
+/app/controllers/articles_controller.rb
+  . . .
+  def show
+    @article.update_visits_count
+  end
+
+
+
+##########################################################################################################################################
+######
+######   18)  Scaffold (all the previous steps together):
+######
+##########################################################################################################################################
+
+ - Generate an scaffold passing the model name, its FK's with other models and the its fields (only one: body):
+
+$ rails g scaffold Comment user:references article:references body:text
+
+ - Run the generated migration:
+
+$ rake db:migrate
+
+ - And customize the new files:
+
+/app/controllers/comments_controller.rb
+
+lass CommentsController < ApplicationController
+  before_action :set_comment, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!
+  . . .
+
+ - Clean the new stylesheet:
+
+$ > /app/assets/stylesheets/comments.scss
+
+
+
+##########################################################################################################################################
+######
+######   19)  Nested resources
+######
+##########################################################################################################################################
+
+ - The comments in the blog are always related to article. So the comments resources should be related to the articles resources too:
+
+/config/routes.rb
+
+Rails.application.routes.draw do
+  resources :articles do
+    resources :comments
+  end
+  devise_for :users
+  root 'welcome#index'
+end
+
+ - Clean index view:  /app/views/comments/index.html.erb
+
+$ > /app/views/comments/index.html.erb
+
+
+ - The comments should be shown from the articles view:  /app/views/articles/show.html.erb
+. . .
+<div>
+  <%= @article.body %>
+</div>
+<div class="field">
+  <h3>Comentarios</h3>
+  <%= render "comments/form" %>
+</div>
+  <ul>
+    <% @article.comments.each do |comment| %>
+      <li>
+        <%= comment.body %> - <%= comment.user.email %>
+      </li>
+    <% end %>
+  </ul>
+</div>
+. . .
+
+
+ - The article Show action must include a comment New action:  /app/controllers/articles_controller.rb
+
+  def show
+    @article.update_visits_count
+    @comment = Comment.new
+  end
+
+ - The 1:N association in the article model: /app/models/article.rb
+
+class Article < ActiveRecord::Base
+  belongs_to :user
+  has_many :comments
+  . . .
+
+
+ - Edit the comments form partial to be rendered by the articles show view:  /app/views/comments/_form.html.erb
+
+ - The form_for command expect the @article resource as a parent and the @comment resource as a child.
+
+<%= form_for([@article, @comment]) do |f| %>
+  . . .
+
+ - The article and user ids shouldn't be available
+    . . .
+    </div>
+  <% end %>
+  <div class="field">
+    <%= f.label :body %><br>
+    <%= f.text_area :body %>
+  </div>
+  . . .
+
+
+ - From here, the relationship between comments and users:
+
+ - Define the 1:N association in the user model too:  /app/models/user.rb
+
+. . .
+  has_many :articles
+  has_many :comments
+end
+
+
+ - The 1:N association in the controller:  /app/controllers/comments_controller.rb
+
+  def create
+    @comment = current_user.comments.new(comment_params)
+    @comment.article = @article
+    . . .
+
+ - The callback:  /app/controllers/comments_controller.rb
+
+class CommentsController < ApplicationController
+  before_action :set_comment, only: [:update, :destroy]
+  before_action :set_article
+  . . .
+  private
+  def set_article
+    @article = Article.find(params[:article_id])
+  end
+
+ - Every time the @comment is metioned, it should be substituted by its parent (save and update actions):
+
+/app/controllers/comments_controller.rb
+      . . .
+      if @comment.save
+        format.html { redirect_to @comment.article, notice: 'Comment was successfully created.' }
+        format.json { render :show, status: :created, location: @comment.article }
+      . . .
+      if @comment.update(comment_params)
+        format.html { redirect_to @comment.article, notice: 'Comment was successfully updated.' }
+        format.json { render :show, status: :ok, location: @comment.article }
+      . . .
+
+ - The redirection in the Destroy action:
+
+  . . .
+  def destroy
+    @comment.destroy
+    respond_to do |format|
+      format.html { redirect_to @article, notice: 'Comment was successfully destroyed.' }
+      . . .
+
+
+ - Allowing only certain access to the comments will be managed as routes:  /config/routes.rb
+
+  . . .
+  resources :articles do
+    resources :comments, only: [:create, :destroy, :update]
+  end
+
+
+ - Clean the discarded comment actions (and callbacks) in the comment controller file:  /app/controllers/comments_controller.rb
+
+class CommentsController < ApplicationController
+  before_action :set_comment, only: [:update, :destroy]
+  before_action :set_article
+  before_action :authenticate_user!
+  . . .
+  # def index
+  . . .
+  # def show
+  . . .
+  # def new
+  . . .
+  # def edit
+  . . .
+
+
+
+##########################################################################################################################################
+######
+######   20)  Remote forms with AJAX: the post actions will be shown without reload the entire web
+######
+##########################################################################################################################################
+
+ - Install jquery-turbolinks gem from Gemfile:
+
+. . .
+# Remote forms with AJAX
+gem 'jquery-turbolinks'
+. . .
+
+$ bundle install
+$ rails s
+
+
+ - Enable remote and JSON in the comments form:  /app/views/comments/_form.html.erb
+
+<%= form_for([@article, @comment], remote: true, html: { id: "comments-form", :"data-type" => "json" }) do |f| %>
+. . .
+
+
+ - Redefine the article Show action to manage the ul element by AJAX:
+
+  . . .
+  <%= render "comments/form" %>
+  <ul id="comments-box">
+    <% @article.comments.each do |comment| %>
+      <li>
+  . . .
+
+
+ - Insert the AJAX commands in the Coffee script file:  /app/assets/javascripts/comments.coffe
+
+$(document).on "ajax:success", "form#comments-form", (ev,data)->
+  console.log data
+  $(this).find("textarea").val("")
+  $("#comments-box").append("<li> #{data.body} - #{} </li>")
+$(document).on "ajax:error", "form#comments-form", (ev,data)->
+  console.log data
+
+ - When the form call is successfull, identified by its route (action#html_id), the DOM is managed by an AJAX function: (ev,data)->
+   - Show the output in the console (the output is a JSON object, data-type = JSON)
+   - Clean the textarea of the comment
+   - Write a new list element (into the ul "#comments-box" element), like the article Show action does.
+    It lets the user to check its comment just when he writes it
+
+
+
+##########################################################################################################################################
+######
+######   21)  JSON with JBuilder
+######
+##########################################################################################################################################
+
+ - The JSON objects can be constructed by code, with the *.json.jbuilder view files:  /app/views/comments/_comments.json.jbuilder
+
+json.extract! comment, :id, :user_id, :article_id, :body, :created_at, :updated_at
+json.user do
+  json.email @comment.user.email
+end
+
+ - The JSON comment object has a new element, a subJSON key:value into the user element, refering to the user's email.
+
+ - Now thee AJAX code can be refactorized to use the new JSON element:  /app/assets/javascripts/comments.coffe
+
+  . . .
+  $("#comments-box").append("<li> #{data.body} - #{data.user.email} </li>")
+  . . .
+
+
+
+##########################################################################################################################################
+######
+######   22)  Upload files, part I of II
+######
+##########################################################################################################################################
+
+ - Install the paperclip gem with bundle from Gemfile:
+
+. . .
+# Allow to upload and edit image files to the server
+gem 'paperclip'
+. . .
+
+$ bundle install
+$ rails s
+
+
+
+##########################################################################################################################################
+######
+######   23)  Upload files, part II of II
+######
+##########################################################################################################################################
+
+ - Create a migration file with the cover generator (with the server stopped), the fields used by the paperclip gem:
+
+$ rails g migration add_cover_to_articles
+
+
+ - Edit the migration file to add the cover fields into the articles table:  /db/migrate/20210510152452_add_cover_to_articles.rb
+
+class AddCoverToArticles < ActiveRecord::Migration
+  def change
+    add_attachment :articles, :cover
+  end
+end
+
+
+ - Execute the migration:
+
+$ rake db:migrate
+
+
+ - Edit the Article model file to get the chance to access to the new fields (and validate that is a image file):  /app/models/article.rb
+
+  . . .
+  has_attached_file :cover, styles: { medium: "1280x720", thumb: "800x600" }
+  validates_attachment_content_type :cover, content_type: /\Aimage\/.*\Z/
+  . . .
+
+ - Callbacks explanation:
+   - The cover reference is the metadata of the attached file.
+   - The paperclip gem will generate two new versions of the image, the medium and the thum ones.
+   - The model will validate that is any image file type (jpg, gif, etc.)
+
+
+ - Include a new field into the article form file to attach an image file:  /app/views/articles/_form.html.erb
+
+  . . .
+    <%= f.text_field :title, placeholder: "Titulo", class: "form-control" %>
+  </div>
+  <div class="field">
+    Portada: <%= f.file_field :cover %>
+  </div>
+  . . .
+
+
+ - Update the article controller file to include the cover paran as a strong param:  /app/controllers/articles_controller.rb
+
+  . . .
+  def article_params
+    params.require(:article).permit(:title,:body,:cover)
+  end
+  . . .
+
+
+ - Include a new field into the article show file to see the attached image (the thumb style one):  /app/views/articles/show.html.erb
+
+. . .
+    Escrito por: <%= @article.user.email %>
+  </p>
+<% end %>
+<div class="field">
+  <%= image_tag @article.cover.url(:thumb) %>
+</div>
+. . .
+
+
+
+##########################################################################################################################################
+######
+######   24)  Many to many (N:M) categories, part I of III
+######
+##########################################################################################################################################
+
+ - Clean and update the navbar in the partial file:  /app/views/partials/_navigation.html.erb
+
+    . . .
+    <ul class="no-list row center-xs middle-xs">
+      <li class="col-md">
+        <h1 class="no-margin" id="logo"><%= link_to "Blog RGL", root_path %></h1>
+      </li>
+      <li class="col-md">
+        <%= link_to "Artículos", articles_path %>
+      </li>
+
+      <% if user_signed_in? %>
+   . . .
+
+
+ - Create a new resource, Category, with the scaffold generator:
+
+$ rails g scaffold Category name color
+      invoke  active_record
+      create    db/migrate/20210512104121_create_categories.rb
+. . .
+      invoke  scss
+      create    app/assets/stylesheets/scaffolds.scss
+
+
+ - Include validations in the model:  /app/model/category.rb
+
+class Category < ActiveRecord::Base
+  validates :name, presence: true
+end
+
+
+ - Change to color_field method in the form partial file:  /app/views/categories/_form.html.erb
+
+  . . .
+  <div class="field">
+    <%= f.label :color %><br>
+    <%= f.color_field :color %>
+  </div>
+  . . .
+
+
+ - As usual, remove the scaffolds.scss file:  /app/assets/styleshhets/scaffolds.scss
+
+
+ - Due every controller inherits from the application ones, this controller actions will be available in every view.
+   We can define a callback in this controller to use its actions in all views:  /app/controllers/application_controller.rb
+
+class ApplicationController < ActionController::Base
+  protect_from_forgery with: :exception
+  before_action :set_categories
+
+  private
+
+  def set_categories
+    @categories = Category.all
+  end
+end
+
+
+ - So, in the navbar partial file we can use this action:  /app/views/partials/_navigation.html.erb
+
+      . . .
+        <%= link_to "Artículos", articles_path %>
+      </li>
+      <% @categories.each do |category| %>
+        <li class="col-md">
+          <%= link_to category.name, category %>
+        </li>
+      <% end %>
+      . . .
+
+
+ - Finally you can create all the categories you need in the create view:  http://localhost:3000/categories/new
+
+name: Diseño , color: #1086e8
+name: Programación , color: #000000
+name: Tecnología , color: #4527a0
+
+
+
+##########################################################################################################################################
+######
+######   25)  Many to many (N:M) categories, part II of III
+######
+##########################################################################################################################################
+
+
