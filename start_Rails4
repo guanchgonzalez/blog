@@ -1032,6 +1032,8 @@ $ rake db:migrate
 ######
 ##########################################################################################################################################
 
+ - This part is just an introduction, the N:M references will be treated in the part II.
+
  - Clean and update the navbar in the partial file:  /app/views/partials/_navigation.html.erb
 
     . . .
@@ -1118,5 +1120,48 @@ name: Tecnología , color: #4527a0
 ######   25)  Many to many (N:M) categories, part II of III
 ######
 ##########################################################################################################################################
+
+ - 1 article can belong to M categories.
+ - 1 category can have N articles.
+ - Here are the N:M references.
+ - An intermediate table is needed to register the N:M references.
+
+
+ - Generate the model for the intermediate table, HasCategory, and execute the migration:
+
+$ rails g model HasCategory article:references category:references
+$ rake db:migrate
+
+
+ - When a new article is gonna be created, all the categories should be offered.
+
+
+ - Add all the categories to the article new action:  /app/controllers/article_controller.rb
+
+  . . .
+  def new
+    @article = Article.new
+    @categories = Category.all
+  end
+  . . .
+
+
+ - Show the categories through the article form file as a checkboxs list:
+
+  . . .
+  <div class="field">
+    <label>Categorías:</label>
+    <% @categories.each do |category| %>
+      <div class="field">
+        <%= check_box_tag "categories[]", category.id %>
+        <%= category.name %>
+      </div>
+    <% end %>
+  </div>
+  . . .
+
+
+ - The create action in the controller should be updated too:  /app/controllers/article_controller.rb
+ - The strong params should inckude the categories list params (categories[] in the form view):
 
 
