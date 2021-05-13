@@ -554,8 +554,8 @@ $ rails g devise:views
 ##########################################################################################################################################
 
  - The articles table registers should be associated to the users whom created them.
-     - 1 user have N articles
-     - Every article belongs to 1 user
+     - 1 user have N articles  -->  has_many :singular
+     - Every article belongs to 1 user  -->  belongs_to :plural
 
  - Create the FK creation migration file:
 
@@ -1117,14 +1117,16 @@ name: Tecnología , color: #4527a0
 
 ##########################################################################################################################################
 ######
-######   25)  Many to many (N:M) categories, part II of III
+######   25)  Many to many (N:M) categories, part II of III: 1:M relationship
 ######
 ##########################################################################################################################################
 
  - 1 article can belong to M categories.
  - 1 category can have N articles.
- - Here are the N:M references.
+ - That's the N:M references.
  - An intermediate table is needed to register the N:M references: HasCategory
+
+ - This part will implement the relationship between 1 article and M categories (1:M).
 
 
  - Generate the model for the intermediate table, HasCategory, and execute the migration:
@@ -1148,7 +1150,7 @@ $ rake db:migrate
   . . .
 
 
- - Show the categories through the article form file as a checkboxs list:
+ - Show the categories through the article form file as a checkboxs list:  /app/views/articles/_form.html.erb
 
   . . .
   <div class="field">
@@ -1189,7 +1191,7 @@ end
 
 
   - The list is a params element. To save the categories selected for the article,
-   a method should go trough this list, after the create method execution:
+   a method should go trough this list, after the create method execution (a callback):
 
   . . .
   before_save :set_visits_count
@@ -1207,8 +1209,68 @@ end
 
 ##########################################################################################################################################
 ######
-######   26)  Many to many (N:M) categories, part III of III
+######   26)  Many to many (N:M) categories, part III of III: 1:N relatioship
 ######
 ##########################################################################################################################################
+
+ - This part will implement the relationship between 1 category and N articles (1:N).
+
+
+ - The category model have to define the 1:N relationship through the intermediate table:  /app/models/category.rb
+
+class Category < ActiveRecord::Base
+  validates :name, presence: true
+  has_many :has_categories
+  has_many :articles, through: :has_categories
+end
+
+
+ - To show all the articles related to 1 category:  /app/views/categories/show.html.erb
+
+<p id="notice"><%= notice %></p>
+
+<h1 style="color:<%= @category.color %>;"><%= @category.name %></h1>
+<h2>Artículos</h2>
+<% @category.articles.each do |article| %>
+  <h3><%= link_to article.title, article %></h3>
+  <div>
+    <%= article.body %> - <%= link_to "Eliminar", article, class: "red", method: :delete %>
+  </div>
+<% end %>
+
+<%= link_to 'Edit', edit_category_path(@category) %> |
+<%= link_to 'Back', categories_path %>
+
+
+ - Now you can see all the articles for every category from the navbar.
+
+
+ - The same changes should be performed with the article model.
+
+ - The article model have to define the 1:M relationship through the intermediate table:  /app/models/article.rb
+
+class Article < ActiveRecord::Base
+  belongs_to :user
+  has_many :comments
+  has_many :has_categories
+  has_many :articles, through: :has_categories
+  . . .
+
+
+ - To show all the categories related to 1 article:  /app/views/articles/show.html.erb
+
+. . .
+  </p>
+<% end %>
+<div class="field">
+  <% @article.categories.each do |category| %>
+    <%= link_to category.name, category, style:"color:#{category.color};" %>
+  <% end %>
+</div>
+. . .
+
+
+ - Now you can see all the categories on every article from the navbar Artículos menu.
+
 
 
