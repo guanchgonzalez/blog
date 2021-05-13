@@ -32,6 +32,9 @@ gem 'jquery-turbolinks'
 # Allow to upload and edit image files to the server
 gem 'paperclip'
 
+# AASM to use states machine
+gem 'aasm'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

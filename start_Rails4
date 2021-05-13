@@ -1389,4 +1389,100 @@ https://localhost:3000/articles/new
 
 
 
+##########################################################################################################################################
+######
+######   28) State machines with AASM
+######
+##########################################################################################################################################
+
+ - Implements a states machine in the article model.
+
+ - Add the AASM gem into the Gemfile and run the bundle install:
+
+Gemfile:
+. . .
+# AASM to use states machine
+gem 'aasm'
+. . .
+
+$ bundle install
+$ rails s
+
+
+ - Include the AASM module into the article model
+
+ - Generate a migration file to add the state column to the articles table:
+
+$ rails g migration add_column_state_to_articles state
+
+
+ - Set a default value for the new column and migrate it:  /db/migrate/20210513151812_add_column_state_to_articles.rb
+
+class AddColumnStateToArticles < ActiveRecord::Migration
+  def change
+    add_column :articles, :state, :string, default: "in_draft"
+  end
+end
+
+$ rake db:migrate
+
+
+ - Include the AASM module into the article model and implements the states machine:  /app/models/article.rb
+
+class Article < ActiveRecord::Base
+  include AASM
+  . . .
+  aasm column: "state" do
+    state :in_draft, initial: true
+    state :published
+
+    event :publish do
+      transitions from: :in_draft, to: :published
+    end
+
+    event :unpublish do
+      transitions from: :published, to: :in_draft
+    end
+  end
+
+  private
+  . . .
+
+
+ - Checking the state transitions during an article creation:
+
+https://localhost:3000/articles/new
+
+irb> Article.last.state
+ => "in_draft"
+
+irb> Article.last.publish!
+ => true
+
+irb> Article.last.state
+ => "published" 
+
+irb> Article.last.may_publish?
+ => false 
+
+irb> Article.last.may_unpublish?
+ => true
+
+irb> Article.first.state
+ => "in_draft" 
+
+irb> Article.first.may_publish?
+ => true 
+
+irb> Article.first.publish!
+ => true
+
+irb> Article.first.state
+ => "published" 
+
+irb> Article.first.published?
+ => true
+
+
+
 
