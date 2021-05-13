@@ -5,4 +5,6 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :validatable
   has_many :articles
   has_many :comments
+
+  include PermissionsConcern
 end

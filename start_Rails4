@@ -1274,3 +1274,119 @@ class Article < ActiveRecord::Base
 
 
 
+##########################################################################################################################################
+######
+######   27)  Concerns
+######
+##########################################################################################################################################
+
+ - The concern methods belongs to a module (the concern module).
+ - The concern module can be included on every model file (the model class).
+ - The concern methods are available for these models.
+ - A model concern can be used on every model where this module is included.
+
+ - Generate a migration file to modify the permission_level column into the users table:
+
+$ rails g migration change_column_permission_level_from_string_to_integer
+
+
+ - Edit the migration file:  /db/migrate/20210513122105_change_column_permission_level_from_string_to_integer.rb
+ - The changes have to be reversible, to allow a rollback at any time (rake db:rollback).
+
+class ChangeColumnPermissionLevelFromStringToInteger < ActiveRecord::Migration
+  def change
+    remove_column :users, :permission_level, :string
+    add_column :users, :permission_level, :integer, default: 1
+  end
+end
+
+
+ - Execute the migration:
+
+$ rake db:migrate
+
+
+ - Create a new model concern file:  /app/models/concerns/permissions_concern.rb
+
+module PermissionsConcern
+  extend ActiveSupport::Concern
+
+  def is_normal_user?
+    self.permission_level >= 1
+  end
+
+  def is_editor?
+    self.permission_level >= 2
+  end
+
+  def is_admin?
+    self.permission_level >= 3
+  end
+
+end
+
+
+ - Include the new module into the user model file (is a class):  /app/models/user.rb
+
+class User < ActiveRecord::Base
+. . .
+  include PermissionsConcern
+end
+
+
+ - It's also able to create a concern module for the controllers.
+ - Another way is to call their methods from the root controller, the application one,
+  by new methods definition at controller level:  /app/controllers/application_controller.rb
+
+class ApplicationController < ActionController::Base
+  protect_from_forgery with: :exception
+
+  before_action :set_categories
+
+  protected
+
+  def authenticate_editor!
+    redirect_to root_path unless user_signed_in? && current_user.is_editor?
+  end
+
+  def authenticate_admin!
+    redirect_to root_path unless user_signed_in? && current_user.is_admin?
+  end
+
+  private
+  . . .
+
+
+ - The new permissions methods can be used by callbacks into the article controller file:  /app/controllers/articles_controller.rb
+
+class ArticlesController < ApplicationController
+  before_action :authenticate_user!, except: [:show, :index]
+  before_action :set_article, except: [:index, :new, :create]
+  before_action :authenticate_editor!, only: [:new, :create, :update]
+  before_action :authenticate_admin!, only: [:destroy]
+  . . .
+
+
+ - Explanation:
+    - Logged in as normal user, you can't show the article new view, either post or update an article.
+     You'll be redirected to the initial view (root_path).
+    - Logged in as an editor or an admin, you can.
+
+ - Create two new accounts (Crear cuenta in naqvbar) and update their permission_level fields:
+
+irb> User.all
+irb> User.find(2).update(permission_level:2)
+irb> User.find(3).update(permission_level:3)
+
+ - Check the available actions/views.
+
+https://localhost:3000/articles/new
+
+
+#########
+# NOTE: # The Ruby method names returning a boolean value should be suffixed by a "?"
+#########
+
+
+
+
