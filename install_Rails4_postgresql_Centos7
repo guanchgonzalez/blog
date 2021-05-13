@@ -1,0 +1,165 @@
+
+--- NOTE: '$' means looged as a normal S.O. user and '#' means looged as root.
+
+
+--- Following the instruction from:   https://sharadchhetri.com/how-to-easily-install-ruby-2-1-0-in-centos-and-rhel/
+
+
+1) Install RVM: 
+
+$ curl -L get.rvm.io | bash -s stable
+
+
+2) To install Ruby 2.1.2, open a new normal session to load the /etc/profile.d/rvm.sh script:
+
+$ which rvm
+~/.rvm/bin/rvm
+
+$ rvm requirements
+Checking requirements for centos.
+Requirements installation successful.
+
+$ rvm install 2.1.2
+. . .
+Install of ruby-2.1.2 - #complete 
+
+$ rvm use 2.1.2 --default
+Using /home/rg/.rvm/gems/ruby-2.1.2
+
+$ ruby -v
+ruby 2.1.2p95 (2014-05-08 revision 45877) [x86_64-linux]
+
+
+
+--- Following the instructions from:   https://www.softwarecollections.org/en/scls/rhscl/rh-nodejs10/
+
+
+3) Install Node.js v10:
+
+# yum install centos-release-scl-rh
+
+# yum install rh-nodejs10
+
+
+4) To enable the Node.js v10 Software Collection, update the /etc/profile.d/rvm.sh:
+
+# echo "
+export PATH=${PATH}:/opt/rh/rh-nodejs10/root/usr/bin
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/rh/rh-nodejs10/root/usr/lib64
+export PYTHONPATH=${PYTHONPATH}:/opt/rh/rh-nodejs10/root/usr/lib/python2.7/site-packages
+export MANPATH=${MANPATH}:/opt/rh/rh-nodejs10/root/usr/share/man
+source scl_source enable rh-nodejs10
+rvm --default use 2.1.2 >/dev/null" >> /etc/profile.d/rvm.sh
+
+
+$ node -v
+v10.21.0
+
+$ npm -v
+6.14.4
+
+
+5) Avoid to install documentation for every gem:
+
+$ echo "gem: --no-document" >> ~/.gemrc
+
+$ gem -v
+3.0.9
+
+
+
+--- Following the instructions from:   https://www.server-world.info/en/note?os=CentOS_7&p=rails4
+
+
+6) Install the RPM needed for bundler and Rails:
+
+# yum --enablerepo=epel,centos-sclo-rh -y install rh-ruby22-ruby-devel libuv gcc make libxml2 libxml2-devel mariadb-devel zlib-devel libxslt-devel 
+
+
+7) Install the proper bundler gem:
+
+$ gem install bundler -v 1.17.3
+Fetching bundler-1.17.3.gem
+Successfully installed bundler-1.17.3
+1 gem installed
+
+
+8) Install needed gems:
+
+$ gem install nokogiri -- --use-system-libraries
+Fetching mini_portile2-2.4.0.gem
+Fetching nokogiri-1.9.1.gem
+Successfully installed mini_portile2-2.4.0
+Building native extensions with: '--use-system-libraries'
+This could take a while...
+Successfully installed nokogiri-1.9.1
+2 gems installed
+
+$ gem install minitest -v 5.12.0
+ng minitest-5.12.0.gem
+Successfully installed minitest-5.12.0
+1 gem installed
+
+$ gem install rack -v 1.6.13
+Fetching rack-1.6.13.gem
+Successfully installed rack-1.6.13
+1 gem installed
+
+$ gem install sprockets -v 3.7.2
+Fetching sprockets-3.7.2.gem
+Successfully installed sprockets-3.7.2
+1 gem installed
+
+$ gem install pg -v 1.1.4
+Fetching pg-1.1.4.gem
+Building native extensions. This could take a while...
+Successfully installed pg-1.1.4
+1 gem installed
+
+
+9) Install Rails 4:
+
+$ gem install rails --version="~>4.0" -- --no-ri --no-rdoc
+Fetching thread_safe-0.3.6.gem
+Fetching loofah-2.9.0.gem
+. . .
+Successfully installed sprockets-rails-3.2.2
+Successfully installed rails-4.2.11.3
+19 gems installed
+
+$ rails -v
+Rails 4.2.11.3
+
+
+
+--- Following the instructions from:   https://www.howtoforge.com/tutorial/how-to-install-and-use-ruby-on-rails-with-postgresql-on-centos-7/
+
+
+10) Install PostGreSQL:
+
+# yum -y install postgresql-server postgresql-devel postgresql-contrib
+
+# postgresql-setup initdb
+
+# vim /var/lib/pgsql/data/pg_hba.conf
+. . .
+
+# systemctl start postgresql
+
+# passwd postgres
+... postgres
+
+$ su - postgres
+  psql
+  create role rails_dev with createdb login password 'aqwe123';
+  \du
+                               Lista de roles
+ Nombre de rol |                   Atributos                    | Miembro de 
+---------------+------------------------------------------------+------------
+ postgres      | Superusuario, Crear rol, Crear BD, Replicación | {}
+ rails_dev     | Crear BD                                       | {}
+
+  Ctrl+D
+Ctrl+D
+$
+
