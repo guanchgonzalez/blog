@@ -1124,7 +1124,7 @@ name: Tecnología , color: #4527a0
  - 1 article can belong to M categories.
  - 1 category can have N articles.
  - Here are the N:M references.
- - An intermediate table is needed to register the N:M references.
+ - An intermediate table is needed to register the N:M references: HasCategory
 
 
  - Generate the model for the intermediate table, HasCategory, and execute the migration:
@@ -1133,7 +1133,9 @@ $ rails g model HasCategory article:references category:references
 $ rake db:migrate
 
 
- - When a new article is gonna be created, all the categories should be offered.
+ - When a new article is gonna be created, all the categories should be offered:
+
+    https://localhost:3000/articles/new
 
 
  - Add all the categories to the article new action:  /app/controllers/article_controller.rb
@@ -1162,6 +1164,51 @@ $ rake db:migrate
 
 
  - The create action in the controller should be updated too:  /app/controllers/article_controller.rb
- - The strong params should inckude the categories list params (categories[] in the form view):
+ - The strong params should include the categories list params (categories[] in the form view):
+
+  . . .
+  def create
+    @article = current_user.articles.new(article_params)
+    @article.categories = params[:categories]
+    if @article.save
+  . . .
+  def article_params
+    params.require(:article).permit(:title,:body,:cover,:categories)
+  end
+end
+
+
+ - The article model file need a custom setter:  /app/models/article.rb
+
+  . . .
+  # Custom setter
+  def categories=(value)
+    @categories = value
+  end
+  . . .
+
+
+  - The list is a params element. To save the categories selected for the article,
+   a method should go trough this list, after the create method execution:
+
+  . . .
+  before_save :set_visits_count
+  after_create :save_categories
+  . . .
+  private
+  def save_categories
+    @categories.each do |category_id|
+      HasCategory.create(category_id: category_id, article_id: self.id)
+    end
+  end
+  . . .
+
+
+
+##########################################################################################################################################
+######
+######   26)  Many to many (N:M) categories, part III of III
+######
+##########################################################################################################################################
 
 
