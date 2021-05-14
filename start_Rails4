@@ -1631,7 +1631,7 @@ class ArticlesController < ApplicationController
 
 ##########################################################################################################################################
 ######
-######   31)  Markup editor, part I of III: Embedding a markup editor
+######   31)  Markup editor, part I of II: Embedding a markup editor
 ######
 ##########################################################################################################################################
 
@@ -1641,7 +1641,7 @@ class ArticlesController < ApplicationController
 /Gemfile:
 
 . . .
-# Editor for markdown language (ready to HTML)
+# Editor for markdown language (ready for HTML)
 gem 'epic-editor-rails', '~> 0.2.4'
 . . .
 
@@ -1681,13 +1681,96 @@ $ rails s
 </script>
 
 
- - Then the show action should format the HTML marked text:  /app/views/articles/show.html.erb
+ - Then the show action should process the HTML markdown text:  /app/views/articles/show.html.erb
 
 . . .
   Visitas: <%= @article.visits_count %>
 </p>
 <div>
   <%= @article.body.html_safe %>
+</div>
+. . .
+
+
+
+##########################################################################################################################################
+######
+######   32)  Markup editor, part II of II: Editing saved markdown texts
+######
+##########################################################################################################################################
+
+ - Generate a migration to add a new column to the article table and execute it:
+
+$ rails g migration add_column_markup_body_to_articles markup_body:text
+$ rake db:migrate
+
+
+ - Insert a new element into the article form view to save the text body with its original markdown sintaxis:  /app/views/articles/_form.html.erb
+
+    . . .
+    <%= f.hidden_field :body, id: "body-textarea" %>
+    <%= f.hidden_field :markup_body, id: "markup-body-textarea" %>
+    <div id="epiceditor" style="height:350px;"></div>
+    . . .
+  $("#articles_form").on("submit", function(){
+    $("#body-textarea").val( editor.exportFile("nuevo_articulo", "html") );
+    $("#markup-body-textarea").val( editor.exportFile("nuevo_articulo") );
+  . . .
+
+
+ - Include the new column into the article controller strong params:  /app/controllers/articles_controller.rb
+
+  . . .
+  def article_params
+    params.require(:article).permit(:title, :body, :cover,
+                                    :markup_body, :categories)
+  end
+end
+
+
+ - Create a new article and check the saved data:
+
+http://localhost:3000/articles/new
+
+irb> Article.last
+ => #<Article id: 15, title: "Segundo post con markup.", body: "<h2 id=\"hola-mundo\">Hola mundo</h2>\r\n<ul>\r\n<li>Lis...", visits_count: 1, created_at: "2021-05-14 14:30:39", updated_at: "2021-05-14 14:30:39", user_id: 3, cover_file_name: nil, cover_content_type: nil, cover_file_size: nil, cover_updated_at: nil, state: "in_draft", markup_body: "## Hola mundo\r\n\r\n\r\n * Lista de cosas por hacer\r\n *..."> 
+
+
+ - If you try to edit the article in another session but keeping the original new session, when you edit the new one instead of the edit one,
+    the edit one loads the content of the new one in a malformed way everytime you the refresh it.
+
+http://localhost:3000/articles/15/edit
+http://localhost:3000/articles/new
+
+ - To avoid this, the EpipcEditor object should synchronize with an exixtent element into the view when it is instantiated:  /app/views/articles/_form.html.erb
+
+. . .
+<script>
+
+  var editor = new EpicEditor( {
+    textarea: "markup-body-textarea",
+    file: {name: "nuevo_articulo"}
+  } );
+. . .
+
+
+ - To avoid XSS attacks in the show view, the sanitize gem should be applied:
+
+/Gemfile:
+
+. . .
+# Avoid XSS attacks in JS
+gem 'sanitize', '~> 5.2', '>= 5.2.3'
+. . .
+
+
+ - Use the Sanitize class into the article show view:  /app/views/articles/show.html.erb
+
+. . .
+  Visitas: <%= @article.visits_count %>
+</p>
+<div>
+  <%= Sanitize.fragment(@article.body, Sanitize::Config::RELAXED).html_safe %>
 </div>
 . . .
 

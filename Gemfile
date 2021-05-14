@@ -43,6 +43,9 @@ gem 'will_paginate', '~> 3.0'
 # Editor for markdown language (ready to HTML)
 gem 'epic-editor-rails', '~> 0.2.4'
 
+# Avoid XSS attacks in JS
+gem 'sanitize', '~> 5.2', '>= 5.2.3'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
