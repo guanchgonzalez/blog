@@ -35,6 +35,9 @@ gem 'paperclip'
 # AASM to use states machine
 gem 'aasm'
 
+# Pagination
+gem 'will_paginate'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

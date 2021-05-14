@@ -1583,4 +1583,47 @@ class ArticlesController < ApplicationController
 
 
 
+##########################################################################################################################################
+######
+######   30) Pagination
+######
+##########################################################################################################################################
+
+ - First, two litle fixes:
+
+
+ - Remove the "Eliminar" button in the article index view:  /app/views/articles/index.html.erb
+
+<% @articles.each do |article| %>
+  <h1><%= link_to article.title, article %></h1>
+  <div>
+    <%= article.body %>
+  </div>
+<% end %>
+
+
+ - Remove the limit clause in the "ultimos" scope:  /app/models/article.rb
+
+  . . .
+  scope :ultimos, ->{ order("created_at DESC") }
+  . . .
+
+
+ - Then the pagination can be implemented in the article index action:  /app/controllers/articles_controller.rb
+    - The paginate method expects a hash of parameters: paginate({})
+
+  . . .
+  def index
+    @articles = Article.publicados.ultimos.paginate(page: params[:page], per_page: 5)
+  end
+
+
+ - Add the pages selector in the article index view:  /app/views/articles/index.html.erb
+
+. . .
+<% end %>
+<%= will_paginate @articles %>
+
+
+
 
