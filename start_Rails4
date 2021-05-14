@@ -1199,8 +1199,10 @@ end
   . . .
   private
   def save_categories
-    @categories.each do |category_id|
-      HasCategory.create(category_id: category_id, article_id: self.id)
+    unless @categories.nil?
+      @categories.each do |category_id|
+        HasCategory.create(category_id: category_id, article_id: self.id)
+      end
     end
   end
   . . .
@@ -1391,7 +1393,7 @@ https://localhost:3000/articles/new
 
 ##########################################################################################################################################
 ######
-######   28) State machines with AASM
+######   28)  State machines with AASM
 ######
 ##########################################################################################################################################
 
@@ -1487,7 +1489,7 @@ irb> Article.first.published?
 
 ##########################################################################################################################################
 ######
-######   29) Scopes: callbacks to accurate the model methods
+######   29)  Scopes: callbacks to accurate the model methods
 ######
 ##########################################################################################################################################
 
@@ -1585,7 +1587,7 @@ class ArticlesController < ApplicationController
 
 ##########################################################################################################################################
 ######
-######   30) Pagination
+######   30)  Pagination
 ######
 ##########################################################################################################################################
 
@@ -1623,6 +1625,71 @@ class ArticlesController < ApplicationController
 . . .
 <% end %>
 <%= will_paginate @articles %>
+
+
+
+
+##########################################################################################################################################
+######
+######   31)  Markup editor, part I of III: Embedding a markup editor
+######
+##########################################################################################################################################
+
+ - Install the epic-editor-rails gem and enable it in the application JS file:  /app/assets/javascripts/application.js
+
+
+/Gemfile:
+
+. . .
+# Editor for markdown language (ready to HTML)
+gem 'epic-editor-rails', '~> 0.2.4'
+. . .
+
+
+$ bundle install
+
+
+/app/assets/javascripts/application.js
+
+. . .
+//= require epiceditor
+//= require_tree .
+
+
+$ rails s
+
+
+ - Embed the Epic Editor as the article body into the article form view:  /app/views/articles/_form.html.erb
+
+  . . .
+    Portada: <%= f.file_field :cover %>
+  </div>
+  <div class="field">
+    <%= f.hidden_field :body, id: "body-textarea" %>
+    <div id="epiceditor" style="height:350px;"></div>
+  </div>
+  . . .
+<script>
+
+  var editor = new EpicEditor( {file: {name: "nuevo_articulo"}} );
+
+  editor.load();
+  $("#articles_form").on("submit", function(){
+    $("#body-textarea").val( editor.exportFile("nuevo_articulo", "html") );
+  });
+
+</script>
+
+
+ - Then the show action should format the HTML marked text:  /app/views/articles/show.html.erb
+
+. . .
+  Visitas: <%= @article.visits_count %>
+</p>
+<div>
+  <%= @article.body.html_safe %>
+</div>
+. . .
 
 
 

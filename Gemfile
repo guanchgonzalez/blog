@@ -24,19 +24,24 @@ gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0', group: :doc
 
 # Use devise to manage user accounts
-gem 'devise'
+gem 'devise', '~> 4.7', '>= 4.7.3'
+
+
 
 # Remote forms with AJAX
-gem 'jquery-turbolinks'
+gem 'jquery-turbolinks', '~> 2.1'
 
 # Allow to upload and edit image files to the server
-gem 'paperclip'
+gem 'paperclip', '~> 4.3', '>= 4.3.7'
 
 # AASM to use states machine
-gem 'aasm'
+gem 'aasm', '~> 5.2'
 
 # Pagination
-gem 'will_paginate'
+gem 'will_paginate', '~> 3.0'
+
+# Editor for markdown language (ready to HTML)
+gem 'epic-editor-rails', '~> 0.2.4'
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
