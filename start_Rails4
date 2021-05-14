@@ -1059,7 +1059,7 @@ $ rails g scaffold Category name color
       create    app/assets/stylesheets/scaffolds.scss
 
 
- - Include validations in the model:  /app/model/category.rb
+ - Include validations in the model:  /app/models/category.rb
 
 class Category < ActiveRecord::Base
   validates :name, presence: true
@@ -1482,6 +1482,104 @@ irb> Article.first.state
 
 irb> Article.first.published?
  => true
+
+
+
+##########################################################################################################################################
+######
+######   29) Scopes: callbacks to accurate the model methods
+######
+##########################################################################################################################################
+
+ - Having a state machines, we can define queries for a certain state (scope depending on the state).
+ - A filter or an order can be implemented too with this kind of callback.
+ - Have to be declared in the model files, as callbacks with lambdas or as class methods.
+ - They can be used in any controller where the object model is called, even nested.
+
+
+ - Declare the scope callbacks with lambdas in the articles model file:  /app/models/article.rb
+
+  . . .
+  validates_attachment_content_type :cover, content_type: /\Aimage\/.*\Z/
+  scope :publicados, ->{ where(state: "published") }
+  scope :ultimos, ->{ order("created_at DESC").limit(10) }
+  . . .
+
+
+ - Use the scopes on any controller file:  /app/controllers/articles_controller.rb
+
+  . . .
+  def index
+    @articles = Article.publicados.ultimos
+  end
+  . . .
+
+
+ - Relating to the previous chapter, we can create a Dashboard view for admin user where the articles can be published.
+
+ - Create two new routeis for the Dashboard:  /config/routes.rb
+    - Show all the articles, in_draft and published
+    - Publish an article
+
+  . . .
+  # Dashboard routes
+  get "/dashboard", to: "welcome#dashboard"
+  put "/articles/:id/publish", to: "articles#publish"
+  . . .
+
+
+ - Declare the methods in the controllers (using callbacks to limit to admin users):
+
+
+/app/controllers/wellcome_controller.rb
+
+class WelcomeController < ApplicationController
+
+  before_action :authenticate_admin!, only: [:dashboard]
+
+  def index
+  end
+
+  def dashboard
+    @articles = Article.all
+  end
+
+end
+
+
+/app/controllers/articles_controller.rb
+
+class ArticlesController < ApplicationController
+  . . .
+  before_action :authenticate_admin!, only: [:destroy, :publish]
+  . . .
+  def publish
+    @article.publish!
+    redirect_to @article
+  end
+
+
+ - And declare the dashboard view:  /app/views/wellcome/dashboard.html.erb
+
+<% @articles.each do |article| %>
+  <h1><%= link_to article.title, article %></h1>
+  <div>
+    <%= article.body %>
+    <%= link_to "  Eliminar", article, class: "red", method: :delete %>
+    <% if article.may_publish? %>
+      <%= link_to "  Publicar", "/articles/#{article.id}/publish", class: "blue", method: :put %>
+    <% end %>
+  </div>
+<% end %>
+
+
+ - The blue style should be defined too:  /app/assets/stylesheets/style.scss
+
+. . .
+.blue{
+  color: #4169E1 !important;
+}
+. . .
 
 
 
