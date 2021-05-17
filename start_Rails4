@@ -1722,6 +1722,7 @@ $ rake db:migrate
 
   . . .
   def article_params
+??? desde aquí hasta ???FIN las líneas pueden haber sido insertadas/borradas
     params.require(:article).permit(:title, :body, :cover,
                                     :markup_body, :categories)
   end
@@ -1773,6 +1774,132 @@ gem 'sanitize', '~> 5.2', '>= 5.2.3'
   <%= Sanitize.fragment(@article.body, Sanitize::Config::RELAXED).html_safe %>
 </div>
 . . .
+
+
+
+##########################################################################################################################################
+######
+######   33)  Render collections
+######
+##########################################################################################################################################
+
+ - Refactor the article index view to improve the UI:  /app/views/articles/index.html.erb
+
+<div class="container" style="margin: 0 auto;">
+  <h1>Artículos</h1>
+  <div class="row">
+    <% @articles.each do |article| %>
+      <div class="col-md-4 top-space">
+        <div class="box relative article-height">
+          <div class="absolute article-height background-cover"
+              style="background: url(<%= article.cover.url(:thumb) %>);
+              top: 0px; left: 0px; width: 100%;">
+
+          </div>
+          <div class="absolute article-height background-cover"
+              style="background: rgba(0,0,0,0.5);
+              top: 0px; left: 0px; width: 100%;">
+
+          </div>
+          <div class="relative white text-center">
+            <h2><%= link_to article.title, article %></h2>
+            <p><%= truncate(article.body, length:30) %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="top-space text-center">
+    <%= will_paginate @articles %>
+  </div>
+</div>
+
+
+ - The pagination should be incremented to 10 elements per page in the controller:  /app/controllers/articles_controller.rb
+
+  . . .
+  def index
+    @articles = Article.publicados.ultimos.paginate(page: params[:page], per_page: 12)
+  end
+  . . .
+
+
+ - New style classes should be created too:  app/assets/stylesheets/style.scss
+
+. . .
+.text-center{
+  text-align: center;
+}
+.relative{
+  position: relative;
+}
+.absolute{
+  position: absolute;
+}
+.article-height{
+  height: 150px;
+}
+.background-cover{
+  background-position: center;
+  background-size: cover;
+}
+. . .
+
+
+
+ - A better way of view development is with the render command.
+ - It loads a partial file passing a list as parameter.
+ - The each loop in not needed anymore:
+
+/app/views/articles/index.html.erb:
+
+<div class="container" style="margin: 0 auto;">
+  <h1>Artículos</h1>
+  <div class="row">
+    <%= render @articles %>
+  </div>
+  <div class="top-space text-center">
+    <%= will_paginate @articles %>
+  </div>
+</div>
+
+
+/app/views/articles/_article.html.erb
+
+<div class="col-md-4 top-space">
+  <div class="box relative article-height">
+    <div class="absolute article-height background-cover"
+        style="background: url(<%= article.cover.url(:thumb) %>);
+        top: 0px; left: 0px; width: 100%;">
+
+    </div>
+    <div class="absolute article-height background-cover"
+        style="background: rgba(0,0,0,0.5);
+        top: 0px; left: 0px; width: 100%;">
+
+    </div>
+    <div class="relative white text-center">
+      <h2><%= link_to article.title, article %></h2>
+      <p><%= truncate(article.body, length:30) %></p>
+    </div>
+  </div>
+</div>
+
+
+ - The same can be done for the categories show view:  /app/views/categories/show.html.erb
+
+<p id="notice"><%= notice %></p>
+
+<div class="container" style="margin: 0 auto;">
+  <h1 style="color:<%= @category.color %>;"><%= @category.name %></h1>
+  <div class="row">
+    <%= render @category.articles %>
+  </div>
+  <div class="top-space text-center">
+    <%= link_to 'Edit', edit_category_path(@category) %> |
+    <%= link_to 'Back', categories_path %>
+  </div>
+</div>
 
 
 
