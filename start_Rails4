@@ -1815,7 +1815,8 @@ gem 'sanitize', '~> 5.2', '>= 5.2.3'
 </div>
 
 
- - The pagination should be incremented to 10 elements per page in the controller:  /app/controllers/articles_controller.rb
+ - The flexboxgrid can split the screen in up to 12 cols. We will divide it into 3 columns. 
+ - The pagination can be incremented to 12 elements per page in the controller:  /app/controllers/articles_controller.rb
 
   . . .
   def index
@@ -1847,9 +1848,9 @@ gem 'sanitize', '~> 5.2', '>= 5.2.3'
 
 
 
- - A better way of view development is with the render command.
+ - A better way of develop this view is using with the render command.
  - It loads a partial file passing a list as parameter.
- - The each loop in not needed anymore:
+ - The each loop in the articles object is not needed anymore:
 
 /app/views/articles/index.html.erb:
 
@@ -1900,6 +1901,132 @@ gem 'sanitize', '~> 5.2', '>= 5.2.3'
     <%= link_to 'Back', categories_path %>
   </div>
 </div>
+
+
+
+##########################################################################################################################################
+######
+######   34)  Avatars with gravatars
+######
+##########################################################################################################################################
+
+ - Refactor the article show view to improve the UI:  /app/views/articles/show.html.erb
+
+<article class="bottom-space">
+  <div class="row center-xs">
+    <div class="col-xs-12 light-border col-md-7">
+      <h1 class="be-big blue"><%= @article.title %></h1>
+      <p class="text-right be-small">
+        <%= link_to "Atrás", articles_path, class: "underline" %> -
+        <span class="red"><%= @article.visits_count %> visit(s)</span> -
+        <% unless @article.user.nil? %>
+          Escrito por: <%= @article.user.email %>
+        <% end %>
+      </p>
+      <div class="text-justify">
+        <%= Sanitize.fragment(@article.body,
+                              Sanitize::Config::RELAXED).html_safe %>
+      </div>
+      <div>
+        <%= render "articles/comments"%>
+      </div>
+    </div>
+  </div>
+</article>
+
+
+ - New style classes should be created too:  /app/assets/stylesheets/style.scss
+
+. . .
+.blue{
+  color: #66CCFF !important;
+}
+.grey{
+  color: #616161
+}
+.be-big{
+  font-size: 2em;
+}
+.be-small{
+  font-size: 12px;
+}
+.bottom-space{
+  margin-bottom: 2em;
+}
+.light-border{
+  border-style: none;
+  border-width: thin;
+}
+.text-right{
+  text-align: right;
+}
+.text-justify{
+  text-align: justify;
+}
+.underline{
+  text-decoration: underline;
+}
+. . .
+
+
+ - Due a render "articles/comments" is used, a _comments partial file is needed:  /app/views/articles/_comments.html.erb
+
+<div class="grey">
+  <div class="row">
+    <div class="col-xs-6">
+      Participa en los comentarios
+    </div>
+    <div class="col-xs-6">
+      <%= @article.comments.count %> comentario(s)
+    </div>
+  </div>
+  <div>
+    <%= render "comments/form" %>
+  </div>
+  <div class="top-space">
+    <%= render @article.comments %>
+  </div>
+</div>
+
+
+ - Again, using the render @article.comments, a comments/_comment partial file is needed:  /app/views/comments/_comment.html.erb
+
+<article>
+  <header class="text-right be-small">
+    <%= time_ago_in_words(comment.created_at ) %> ago -
+    <%= link_to "Borrar", [@article, comment], class:"red" %>
+  </header>
+  <div class="row">
+    <div class="col-xs-1 col-md-1">
+      <div class="box">
+        <%= image_tag(comment.user.avatar) %>
+      </div>
+    </div>
+    <div class="col-xs-11 col-md-10">
+      <div class="box">
+        <%= comment.body %>
+      </div>
+    </div>
+  </div>
+</article>
+
+
+ - Here is where the gravatar avatar will be used.
+ - Instead of upload an image file with paperclip, it will be catched from the user's email account.
+ - If the user don't has a Gravatar account, a default image will be loaded.
+
+https://en.gravatar.com/site/implement/images/ruby/
+
+ - To implementing it, only the user model will be modified:  /app/models/user.rb
+
+. . .
+  def avatar
+    email_address = self.email.downcase
+    hash = Digest::MD5.hexdigest(email_address)
+    image_src = "https://www.gravatar.com/avatar/#{hash}"
+  end
+
+end
 
 
 

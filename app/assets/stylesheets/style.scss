@@ -19,7 +19,7 @@ a,a:visited{
   color: #F23838 !important;
 }
 .blue{
-  color: #4169E1 !important;
+  color: #66CCFF !important;
 }
 #logo{
   font-size: 1.2em;
@@ -32,6 +32,9 @@ a,a:visited{
 }
 .white{
   color: #F2F2F2;
+}
+.grey{
+  color: #616161
 }
 .large-padding{
   padding: 8px 5px;
@@ -60,6 +63,28 @@ a,a:visited{
 .background-cover{
   background-position: center;
   background-size: cover;
+}
+.be-big{
+  font-size: 2em;
+}
+.be-small{
+  font-size: 12px;
+}
+.bottom-space{
+  margin-bottom: 2em;
+}
+.light-border{
+  border-style: none;
+  border-width: thin;
+}
+.text-right{
+  text-align: right;
+}
+.text-justify{
+  text-align: justify;
+}
+.underline{
+  text-decoration: underline;
 }
 .form-control{
   border: none;
