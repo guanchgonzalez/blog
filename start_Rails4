@@ -2096,4 +2096,99 @@ end
 
 
 
+##########################################################################################################################################
+######
+######   36)  Send emails
+######
+##########################################################################################################################################
+
+ - Install the letter_opener gem for development and test environments to not send the email in these environments:  /Gemfile:
+
+. . .
+group :development, :test do
+  . . .
+  # For mailing
+  gem 'letter_opener', '~> 1.7'
+  . . .
+
+
+ - Generate a mailer:
+
+$ rails g mailer ArticleMailer
+
+
+ - Edit the general mailer class:  /app/mailers/application_mailer.rb
+
+ass ApplicationMailer < ActionMailer::Base
+  default from: "rgonzalez@redborder.com"
+  layout nil
+end
+
+
+ - Edit the article mailer too:  /app/mailers/article_mailer.rb
+
+class ArticleMailer < ApplicationMailer
+  def new_article(article)
+    @article = article
+    User.all.each do |user|
+      mail(to: user.email, subject: "Nuevo artículo en Mi Blog")
+    end
+  end
+end
+
+
+ - Edit the PROD and DEV environment domains and methods for mailing:
+
+/config/environments/development.rb:
+
+  . . .
+  # For mailing
+  config.action_mailer.default_url_options = { host: "localhost:3000" }
+  config.action_mailer.delivery_method = :letter_opener
+  . . .
+
+
+/config/environments/production.rb:
+
+  . . .
+  # For mailing
+  config.action_mailer.default_url_options = { host: "miblog.com" }
+  . . .
+
+
+ - Create a new article mailer view:  /app/views/article_mailer/new_article.html.erb
+
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <h1><%= @article.title %></h1>
+    <p><%= truncate(@article.body, length: 30) %></p>
+    <p><%= link_to "Leer más", article_url(@article) %></p>
+  </body>
+</html>
+
+
+ - Add a callback to the article model:  /app/models/article.rb
+
+  . . .
+  after_create :save_categories
+  after_create :send_email
+  . . .
+  private
+
+  def send_email
+    ArticleMailer.new_article(self).delivery_later
+  end
+  . . .
+
+
+ - Change the Home view (the default one):  /config/routes.rb
+
+  . . .
+  # You can have the root of your site routed with "root"
+  root 'articles#index'
+  . . .
+
 

@@ -46,6 +46,7 @@ gem 'epic-editor-rails', '~> 0.2.4'
 # Avoid XSS attacks in JS
 gem 'sanitize', '~> 5.2', '>= 5.2.3'
 
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
@@ -58,6 +59,9 @@ gem 'sanitize', '~> 5.2', '>= 5.2.3'
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'
+
+  # For mailing
+  gem 'letter_opener', '~> 1.7'
 end
 
 group :development do
