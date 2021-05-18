@@ -2030,4 +2030,70 @@ end
 
 
 
+##########################################################################################################################################
+######
+######   35)  Application helper
+######
+##########################################################################################################################################
+
+ - This is HTML code available for every view:  /app/helpers/application_helper.rb
+
+module ApplicationHelper
+  def article_cover url, options = {}
+    html_class = options[:class]
+    html_style = "background: url(#{url);"\
+                  "width: 100%; height: 300px; background-size: cover;"
+    html = "<header class='#{html_class}' style='#{html_style}' >"\
+            "</header>"
+    html.html_safe
+  end
+end
+
+
+ - url (text) and options (hash) are params
+ - \ like in shell-script
+ - html_safe to not process as HTML, it should be managed as plain text
+
+
+ - Used in the article show view:  /app/views/articles/show.html.erb
+
+<article class="bottom-space">
+  <%= article_cover @article.cover.url %>
+  <div class="row center-xs">
+  . . .
+
+
+ - Fix the notice and alert elements in general view:  /app/views/layouts/application.html.erb
+
+    . . .
+    <%= render "partials/navigation" %>
+    <div style="<%= 'display:none;' if notice.nil? and alert.nil? %> ">
+      <%= notice %> <%= alert %>
+    </div>
+
+    <%= yield %>
+    . . .
+
+
+ - As an example of the second param use, create a new class element in CSS:  /app/assets/stylesheets/style.scss
+
+. . .
+.hidden{
+  display: none !important;
+}
+. . .
+
+
+ - And use it in the article show view:  /app/views/articles/show.html.erb
+
+<article class="bottom-space">
+  <%= article_cover @article.cover.url, class:"hidden" %>
+  <div class="row center-xs">
+  . . .
+
+
+ - The cover image will dissapear.
+
+
+
 
